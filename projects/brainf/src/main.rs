@@ -1,7 +1,8 @@
 use std::io;
 fn main() {
-    let program = ",+>>+......";
-    let mut tape = [0u32; 6];
+    let program = ",.";
+    // let program = ",.+>>+......";
+    let mut tape = [0u8; 100];
     let mut pointer: usize = 0;
 
     for c in program.chars() {
@@ -18,7 +19,7 @@ fn main() {
             pointer = pointer - 1;
         }
         if c == '.' {
-            println!("{}", tape[pointer])
+            println!("{}", tape[pointer] as char)
         }
         if c == ',' {
             let mut user_input = String::new();
@@ -27,7 +28,7 @@ fn main() {
                 .read_line(&mut user_input)
                 .expect("Failed to read line");
 
-            let user_input: u32 = match user_input.trim().parse() {
+            let user_input = match user_input.trim().parse() {
                 Ok(num) => num,
                 Err(_) => continue,
             };
@@ -36,5 +37,5 @@ fn main() {
         }
     }
 
-    println!("Full tape: {:?}", tape);
+    // println!("Full tape: {:?}", tape);
 }
