@@ -1,0 +1,3 @@
+projects/*/.git
+projects/*/.gitignore
+projects/*/target
