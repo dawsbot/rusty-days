@@ -2,9 +2,16 @@
 
 > My journey from JavaScript to Rust
 
+- I'm a web3 dev looking for higher performance.
+- Enticed that Rust was voted [**the most loved programming language**](https://insights.stackoverflow.com/survey/2021#technology-most-loved-dreaded-and-wanted)
+
 Rust (aka RustLang) is a language for performance, reliability, and productivity [source](https://www.rust-lang.org/)
 
 ## Resources Used:
+
+### Cheat-Sheet
+
+- [Programming Idioms](https://www.programming-idioms.org/cheatsheet/Rust)
 
 ### YouTube
 
@@ -12,8 +19,8 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 
 ### Books
 
-- [Language by principles](https://doc.rust-lang.org/stable/rust-by-example/hello/print.html)
-- [Language by examples (harder)](https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html)
+- [Language by principles](https://doc.rust-lang.org/stable/rust-by-example)
+- [Language by examples (harder)](https://doc.rust-lang.org/book)
 
 <br/>
 
