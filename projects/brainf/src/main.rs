@@ -1,15 +1,13 @@
+use std::env;
+use std::fs;
 use std::io;
 fn main() {
-    // let program = ",.";
-    let program = ">+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.>>>++++++++[<++++>-]
-    <.>>>++++++++++[<+++++++++>-]<---.<<<<.+++.------.--------.>>+.>++++++++++.";
+    let args: Vec<String> = env::args().collect();
 
-    // let program = "++++[>+++++<-]>[<+++++>-]+<+[
-    //     >[>+>+<<-]++>>[<<+>>-]>>>[-]++>[-]+
-    //     >>>+[[-]++++++>>>]<<<[[<++++++++<++>>-]+<.<[>----<-]<]
-    //     <<[>>>>>[>>>[-]+++++++++<[>-<-]+++++++++>[-[<->-]+[<<<]]<[>+<-]>]<<-]<<-
-    // ]";
-    // let program = ",.+>>+......";
+    let filename = &args[1];
+
+    let program = fs::read_to_string(filename).expect("Something went wrong reading the file");
+    println!("The program: {}", program);
     let mut tape = [0u8; 30000];
 
     // Where the processor is at in the program
@@ -18,61 +16,79 @@ fn main() {
     let mut address_pointer = 0;
 
     let program_len = program.len();
+
+    // tracks how many loops we are currently in
+    // let mut loop_count = 0u8;
+    let mut loop_start_indices = vec![];
+
     while program_counter < program_len {
-        let current_char = program.chars().nth(program_counter).unwrap();
+        let cell_value = tape[address_pointer];
 
-        // loops
-        /*
-        Jump to closing bracket if the current cell is zero
-         */
-        if current_char == '[' {
-            if tape[address_pointer] == 0 {
-                // find index of next ]
-                while program.chars().nth(program_counter).unwrap() != ']' {
-                    program_counter = program_counter + 1;
+        match program.chars().nth(program_counter).unwrap() {
+            /*
+            Jump to closing bracket if the current cell is zero
+             */
+            '[' => {
+                if cell_value == 0 {
+                    let mut inside_loop_count = 0;
+                    // move to matching ]
+                    loop {
+                        program_counter += 1;
+                        let current_char = program.chars().nth(program_counter).unwrap();
+                        if current_char == '[' {
+                            inside_loop_count += 1;
+                        } else if current_char == ']' {
+                            if inside_loop_count == 0 {
+                                break;
+                            }
+                            inside_loop_count -= 1;
+                        }
+                    }
+                } else {
+                    loop_start_indices.push(program_counter);
                 }
             }
-        }
-        if current_char == ']' {
-            if tape[address_pointer] != 0 {
-                // find index of next ]
-                while program.chars().nth(program_counter).unwrap() != '[' {
-                    program_counter = program_counter - 1;
+            ']' => {
+                // pop back to start of loop
+                if cell_value == 0 {
+                    loop_start_indices.pop();
+                } else {
+                    program_counter = loop_start_indices.pop().unwrap() - 1;
                 }
             }
-        }
 
-        if current_char == '+' {
-            tape[address_pointer] = tape[address_pointer] + 1;
-        }
-        if current_char == '-' {
-            tape[address_pointer] = tape[address_pointer] - 1;
-        }
-        if current_char == '>' {
-            address_pointer = address_pointer + 1;
-        }
-        if current_char == '<' {
-            address_pointer = address_pointer - 1;
-        }
-        // print char at current point in the tape
-        if current_char == '.' {
-            print!("{}", tape[address_pointer] as char)
-        }
-        // take input from user and store it in the tape
-        if current_char == ',' {
-            let mut user_input = String::new();
-            println!("Please input a number");
-            io::stdin()
-                .read_line(&mut user_input)
-                .expect("Failed to read line");
-            let user_input = match user_input.trim().parse() {
-                Ok(num) => num,
-                Err(_) => continue,
-            };
-            tape[address_pointer] = user_input;
+            '+' => {
+                tape[address_pointer] = cell_value + 1;
+            }
+            '-' => {
+                tape[address_pointer] = cell_value - 1;
+            }
+            '>' => {
+                address_pointer = address_pointer + 1;
+            }
+            '<' => {
+                address_pointer = address_pointer - 1;
+            }
+            // print char at current point in the tape
+            '.' => {
+                print!("{}", cell_value as char)
+            }
+            // take input from user and store it in the tape
+            ',' => {
+                let mut user_input = String::new();
+                println!("Please input a number");
+                io::stdin()
+                    .read_line(&mut user_input)
+                    .expect("Failed to read line");
+                let user_input = match user_input.trim().parse() {
+                    Ok(num) => num,
+                    Err(_) => continue,
+                };
+                tape[address_pointer] = user_input;
+            }
+            _ => (),
         }
         program_counter += 1;
     }
-
     // println!("Full tape: {:?}", tape);
 }
