@@ -7,7 +7,7 @@ fn main() {
     let filename = &args[1];
 
     let program = fs::read_to_string(filename).expect("Something went wrong reading the file");
-    println!("The program: {}", program);
+    // println!("The program: {}", program);
     let mut tape = [0u8; 30000];
 
     // Where the processor is at in the program
@@ -17,14 +17,15 @@ fn main() {
 
     let program_len = program.len();
 
-    // tracks how many loops we are currently in
-    // let mut loop_count = 0u8;
+    // stores the start index of each loop we're inside
     let mut loop_start_indices = vec![];
+
+    let program_chars: Vec<char> = program.chars().collect();
 
     while program_counter < program_len {
         let cell_value = tape[address_pointer];
 
-        match program.chars().nth(program_counter).unwrap() {
+        match program_chars[program_counter] {
             /*
             Jump to closing bracket if the current cell is zero
              */
@@ -34,7 +35,7 @@ fn main() {
                     // move to matching ]
                     loop {
                         program_counter += 1;
-                        let current_char = program.chars().nth(program_counter).unwrap();
+                        let current_char = program_chars[program_counter];
                         if current_char == '[' {
                             inside_loop_count += 1;
                         } else if current_char == ']' {
@@ -49,10 +50,10 @@ fn main() {
                 }
             }
             ']' => {
-                // pop back to start of loop
                 if cell_value == 0 {
                     loop_start_indices.pop();
                 } else {
+                    // pop back to start of loop
                     program_counter = loop_start_indices.pop().unwrap() - 1;
                 }
             }

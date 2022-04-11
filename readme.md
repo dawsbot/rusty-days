@@ -1,4 +1,7 @@
-# Rusty Days
+<p align="center">
+    <img src="static/ferris.png">
+    <h2 align="center">Rusty Days</h2>
+</p>
 
 > My journey from JavaScript to Rust
 
@@ -23,6 +26,14 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 - [Language by examples (harder)](https://doc.rust-lang.org/book)
 
 <br/>
+<hr/>
+
+# Projects Completed
+
+- [Brainf\*\*k compiler](./projects/brainf)
+
+<br/>
+<hr/>
 
 # Variables
 
@@ -46,11 +57,20 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 
 ## Array-like
 
-> If length is dynamic, you must use `vectgguor`, otherwise arrays and tuples are more optimized
+> If length is dynamic, you must use `vector`, otherwise arrays and tuples are more optimized
+
+### Vectors
+
+> The most flexible option
+
+```rust
+let mut v = vec![0];
+println!("element at index {} is {}", 0, vec[0]);
+```
 
 ### Arrays
 
-> Fixed length - Like Tuples except all elements must be of same type
+> Fixed length at compile-time - Like Tuples except all elements must be of same type
 
 ```rust
 let a: [i32; 5] = [1, 2, 3, 4, 5];
@@ -69,7 +89,7 @@ let second = a[1];
 
 ### Tuples
 
-> Fixed Length - Not just two elements like some langauges do
+> Fixed Length at compile-time - Not just two elements like some langauges do
 
 - Accessing tuple values is done with `.`
 
