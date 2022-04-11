@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="static/ferris.png">
+    <img src="https://user-images.githubusercontent.com/3408480/162672716-c9eb1afa-a317-4d01-99d2-a8db25035f44.svg" width="400">
     <h2 align="center">Rusty Days</h2>
 </p>
 
