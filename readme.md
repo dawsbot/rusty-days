@@ -12,6 +12,8 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 
 ## Resources Used:
 
+• 👑 [Rustlings](https://github.com/rust-lang/rustlings)
+
 ### Cheat-Sheet
 
 - [Programming Idioms](https://www.programming-idioms.org/cheatsheet/Rust)
@@ -158,6 +160,40 @@ hello.push('W');
 hello.push_str("orld!");
 ```
 
+### Struct
+
+> Organize complex data types. Looks kinda like a class
+
+```rust
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+fn main() {
+    let origin = Point {x: 0, y: 0};
+    println!("The origin is at ({}, {})", origin.x, origin.y);
+
+    let origin2 = Point {
+        x: 99,
+        ..origin
+    };
+}
+```
+
+#### Tuple Scruct
+
+> A hybrid between a struct and a tuple
+
+- Tuple structs have a name but their fields don't
+
+```rust
+struct Color(i32, i32, i32);
+let dark = Color(20,20,20);
+```
+
+````
+
 # Etc.
 
 ## Semicolons mean a lot
@@ -175,7 +211,7 @@ fn main() {
     // the statement `let y = 6` does not return anything
     let x = (let y = 6);
 }
-```
+````
 
 - This program is valid. Add a semi to `x+1` and not-so!
 
