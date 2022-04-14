@@ -86,9 +86,13 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
     let parsed_program = parse(lexed);
 
     let tape = &mut [Wrapping(0u8); 30000];
-    recurse_leaves(parsed_program, tape, 0);
+    recurse_leaves(&parsed_program, tape, 0);
 
-    fn recurse_leaves(ast: Vec<ASTEntry>, tape: &mut [Wrapping<u8>; 30000], mut tape_index: usize) {
+    fn recurse_leaves(
+        ast: &Vec<ASTEntry>,
+        tape: &mut [Wrapping<u8>; 30000],
+        mut tape_index: usize,
+    ) {
         let ast_len = ast.len();
         // Where the processor is at in the program
         let mut ast_index = 0;
@@ -96,16 +100,16 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
         // error address_pointer needs to be nested-aware to access value from the tape properly
         while ast_index < ast_len {
             let cell_value = tape[tape_index];
-            println!();
-            println!("{:?}", &tape[0..4]);
-            dbg!(ast_index, tape_index, &ast[ast_index].token, cell_value);
+            // println!();
+            // println!("{:?}", &tape[0..4]);
+            // dbg!(ast_index, tape_index, &ast[ast_index].token, cell_value);
             match ast[ast_index].token {
                 /*
                 Recurse in if non-zero
                   */
                 Tokens::StartLoop => {
                     if cell_value != Wrapping(0) {
-                        let members = ast[ast_index].members.clone();
+                        let members = &ast[ast_index].members;
                         dbg!(&members);
                         // recurse into members
                         recurse_leaves(members, tape, tape_index);
@@ -114,7 +118,7 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
                 Tokens::EndLoop => {
                     // println!("end loop, cell_value {}", cell_value);
                     if cell_value != Wrapping(0) {
-                        recurse_leaves(ast.clone(), tape, tape_index);
+                        recurse_leaves(&ast, tape, tape_index);
                     }
                 }
                 Tokens::Increment => {
@@ -124,18 +128,10 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
                     tape[tape_index] = cell_value - Wrapping(1);
                 }
                 Tokens::ShiftRight => {
-                    if tape_index == 29999 {
-                        tape_index = 0;
-                    } else {
-                        tape_index = tape_index + 1;
-                    }
+                    tape_index = (tape_index + 1) % 29999;
                 }
                 Tokens::ShiftLeft => {
-                    if tape_index == 0 {
-                        tape_index = 29999;
-                    } else {
-                        tape_index = tape_index - 1;
-                    }
+                    tape_index = (29999 + tape_index) % 30000;
                 }
                 // print char at current point in the tape
                 Tokens::Print => {
@@ -207,10 +203,10 @@ mod test {
     }
     #[test]
     fn test_nested_loop() {
-        let program = "+>+[+>] should result in 120";
+        let program = "+>+[+>+[-<]]";
         let res = run(String::from(program));
-        assert_eq!(res[0], Wrapping(1));
-        assert_eq!(res[1], Wrapping(2));
+        assert_eq!(res[0], Wrapping(0));
+        assert_eq!(res[1], Wrapping(1));
         assert_eq!(res[2], Wrapping(0));
     }
 }
