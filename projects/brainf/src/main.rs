@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::num::Wrapping;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Tokens {
     Decrement,
     Increment,
@@ -38,24 +38,50 @@ fn lex(program: String) -> Vec<Tokens> {
 #[derive(Debug)]
 struct ASTEntry {
     token: Tokens,
-    line: usize,
+    // line: usize,
+    members: Vec<ASTEntry>,
 }
 
 // step 2
 fn parse(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
-    let mut ast: Vec<ASTEntry> = Vec::new();
-    let mut current_line = 1;
-    for token in lexed {
+    let mut ast: Vec<ASTEntry> = vec![];
+    let mut i = 0;
+    while i < lexed.len() - 1 {
+        dbg!(i);
+        let token = &lexed[i];
+        let mut ast_entry = ASTEntry {
+            token: token.clone(),
+            // line: current_line,
+            members: Vec::new(),
+        };
         match token {
-            Tokens::NewLine => current_line += 1,
+            // newlines do not belong in the AST
+            // Tokens::NewLine => current_line += 1,
+            Tokens::NewLine => continue,
+            Tokens::StartLoop => {
+                let nested_lexed = &lexed[(i + 1)..];
+                let members = parse(nested_lexed.to_vec());
+                ast_entry.members = members;
+                // operations were inside this loop
+                let members_len = ast_entry.members.len();
+                if members_len > 0 {
+                    println!();
+                    dbg!(i, members_len);
+                    i = i + members_len;
+
+                    dbg!(i, members_len);
+                }
+                ast.push(ast_entry);
+            }
+            Tokens::EndLoop => {
+                ast.push(ast_entry);
+                return ast;
+            }
             _ => {
-                let ast_entry = ASTEntry {
-                    token,
-                    line: current_line,
-                };
                 ast.push(ast_entry);
             }
         }
+        i += 1;
     }
     return ast;
 }
