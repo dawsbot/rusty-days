@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::io;
 use std::num::Wrapping;
 
 #[derive(Debug, Clone)]
@@ -12,7 +13,7 @@ enum Tokens {
     TakeInput,
     StartLoop,
     EndLoop,
-    NewLine,
+    // NewLine,
 }
 
 // step 1 - removes non-necessary characters
@@ -28,14 +29,14 @@ fn lex(program: String) -> Vec<Tokens> {
             ',' => lexed.push(Tokens::TakeInput),
             '[' => lexed.push(Tokens::StartLoop),
             ']' => lexed.push(Tokens::EndLoop),
-            '\n' => lexed.push(Tokens::NewLine),
+            // '\n' => lexed.push(Tokens::NewLine),
             _ => (),
         }
     }
     return lexed;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ASTEntry {
     token: Tokens,
     // line: usize,
@@ -46,18 +47,16 @@ struct ASTEntry {
 fn parse(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
     let mut ast: Vec<ASTEntry> = vec![];
     let mut i = 0;
-    while i < lexed.len() - 1 {
-        dbg!(i);
+    while i < lexed.len() {
         let token = &lexed[i];
         let mut ast_entry = ASTEntry {
             token: token.clone(),
-            // line: current_line,
             members: Vec::new(),
         };
         match token {
             // newlines do not belong in the AST
             // Tokens::NewLine => current_line += 1,
-            Tokens::NewLine => continue,
+            // Tokens::NewLine => continue,
             Tokens::StartLoop => {
                 let nested_lexed = &lexed[(i + 1)..];
                 let members = parse(nested_lexed.to_vec());
@@ -65,11 +64,7 @@ fn parse(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
                 // operations were inside this loop
                 let members_len = ast_entry.members.len();
                 if members_len > 0 {
-                    println!();
-                    dbg!(i, members_len);
                     i = i + members_len;
-
-                    dbg!(i, members_len);
                 }
                 ast.push(ast_entry);
             }
@@ -87,99 +82,101 @@ fn parse(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
 }
 
 fn run(program: String) -> [Wrapping<u8>; 30000] {
-    let mut tape = [Wrapping(0u8); 30000];
-    // Where the processor is at in the program
-
-    let mut program_counter = 0;
-    // Where the current cell is in the tape
-    let mut address_pointer = 0;
-
-    let program_len = program.len();
-
-    // stores the start index of each loop we're inside
-    // let mut loop_start_indices = vec![];
-
     let lexed = lex(program);
-    let parsed = parse(lexed);
-    dbg!(parsed);
+    dbg!(&lexed);
+    let parsed_program = parse(lexed);
+    dbg!(&parsed_program);
 
-    // while program_counter < program_len {
-    //     let cell_value = tape[address_pointer];
+    let tape = &mut [Wrapping(0u8); 30000];
 
-    //     match program_chars[program_counter] {
-    //         /*
-    //         Jump to closing bracket if the current cell is zero
-    //          */
-    //         '[' => {
-    //             if cell_value == Wrapping(0) {
-    //                 let mut inside_loop_count = 0;
-    //                 // move to matching ]
-    //                 loop {
-    //                     program_counter += 1;
-    //                     let current_char = program_chars[program_counter];
-    //                     if current_char == '[' {
-    //                         inside_loop_count += 1;
-    //                     } else if current_char == ']' {
-    //                         if inside_loop_count == 0 {
-    //                             break;
-    //                         }
-    //                         inside_loop_count -= 1;
-    //                     }
-    //                 }
-    //             } else {
-    //                 loop_start_indices.push(program_counter);
-    //             }
-    //         }
-    //         ']' => {
-    //             if cell_value == Wrapping(0) {
-    //                 loop_start_indices.pop();
-    //             } else {
-    //                 // pop back to start of loop
-    //                 program_counter = loop_start_indices.pop().unwrap() - 1;
-    //             }
-    //         }
+    recurse_leaves(parsed_program, tape);
+    fn recurse_leaves(ast: Vec<ASTEntry>, tape: &mut [Wrapping<u8>; 30000]) {
+        let ast_len = ast.len();
+        // Where the processor is at in the program
+        let mut program_counter = 0;
+        // Where the current cell is in the tape
+        let mut address_pointer = 0;
 
-    //         '+' => {
-    //             tape[address_pointer] = cell_value + Wrapping(1);
-    //         }
-    //         '-' => {
-    //             tape[address_pointer] = cell_value - Wrapping(1);
-    //         }
-    //         '>' => {
-    //             if address_pointer == 29999 {
-    //                 address_pointer = 0;
-    //             } else {
-    //                 address_pointer = address_pointer + 1;
-    //             }
-    //         }
-    //         '<' => {
-    //             if address_pointer == 0 {
-    //                 address_pointer = 29999;
-    //             } else {
-    //                 address_pointer = address_pointer - 1;
-    //             }
-    //         }
-    //         // print char at current point in the tape
-    //         '.' => {
-    //             print!("{}", (cell_value.0 as char))
-    //         }
-    //         // take input from user and store it in the tape
-    //         ',' => {
-    //             let mut user_input = String::new();
-    //             println!("Please input a number");
-    //             io::stdin()
-    //                 .read_line(&mut user_input)
-    //                 .expect("Failed to read line");
-    //             let user_input = match user_input.trim().parse() {
-    //                 Ok(num) => Wrapping(num),
-    //                 Err(_) => continue,
-    //             };
-    //             tape[address_pointer] = user_input;
-    //         }
-    //     }
-    // program_counter += 1;
-    // }
-    return tape;
+        while program_counter < ast_len {
+            // dbg!(program_counter, ast_len);
+            let cell_value = tape[address_pointer];
+
+            match ast[program_counter].token {
+                /*
+                Recurse in if non-zero
+                  */
+                Tokens::StartLoop => {
+                    if cell_value != Wrapping(0) {
+                        let members = ast[program_counter].members.clone();
+                        // recurse into members
+                        recurse_leaves(members, tape);
+                        // let mut inside_loop_count = 0;
+                        // // move to matching ]
+                        // loop {
+                        //     program_counter += 1;
+                        //     let current_char = program_chars[program_counter];
+                        //     if current_char == '[' {
+                        //         inside_loop_count += 1;
+                        //     } else if current_char == ']' {
+                        //         if inside_loop_count == 0 {
+                        //             break;
+                        //         }
+                        //         inside_loop_count -= 1;
+                        //     }
+                    }
+                }
+                Tokens::EndLoop => {
+                    // println!("end loop, cell_value {}", cell_value);
+                    if cell_value != Wrapping(0) {
+                        recurse_leaves(ast.clone(), tape);
+                    }
+                }
+                Tokens::Increment => {
+                    // println!(
+                    //     "incrementing cell_value: {}, curr: {}",
+                    //     cell_value, tape[address_pointer]
+                    // );
+                    tape[address_pointer] = cell_value + Wrapping(1);
+                }
+                Tokens::Decrement => {
+                    tape[address_pointer] = cell_value - Wrapping(1);
+                }
+                Tokens::ShiftRight => {
+                    if address_pointer == 29999 {
+                        address_pointer = 0;
+                    } else {
+                        address_pointer = address_pointer + 1;
+                    }
+                }
+                Tokens::ShiftLeft => {
+                    if address_pointer == 0 {
+                        address_pointer = 29999;
+                    } else {
+                        address_pointer = address_pointer - 1;
+                    }
+                }
+                // print char at current point in the tape
+                Tokens::Print => {
+                    print!("{}", (cell_value.0 as char))
+                }
+                // take input from user and store it in the tape
+                Tokens::TakeInput => {
+                    let mut user_input = String::new();
+                    println!("Please input a number");
+                    io::stdin()
+                        .read_line(&mut user_input)
+                        .expect("Failed to read line");
+                    let user_input = match user_input.trim().parse() {
+                        Ok(num) => Wrapping(num),
+                        Err(_) => continue,
+                    };
+                    tape[address_pointer] = user_input;
+                }
+            }
+            program_counter += 1;
+        }
+    }
+    return *tape;
 }
 
 fn read_file() -> String {
@@ -211,6 +208,19 @@ mod test {
         let program = "-";
         let res = run(String::from(program));
         assert_eq!(res[0], Wrapping(255));
+        assert_eq!(res[1], Wrapping(0));
+    }
+    #[test]
+    fn test_small_loop() {
+        let program = "+[-]";
+        let res = run(String::from(program));
+        assert_eq!(res[0], Wrapping(0));
+    }
+    #[test]
+    fn test_comment_loop() {
+        let program = "+>[+should skip this+]";
+        let res = run(String::from(program));
+        assert_eq!(res[0], Wrapping(1));
         assert_eq!(res[1], Wrapping(0));
     }
 }
