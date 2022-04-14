@@ -81,16 +81,17 @@ fn parse(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
     return ast;
 }
 
-fn run(program: String) -> [Wrapping<u8>; 30000] {
+const MEMORY_SIZE: usize = 30_000;
+fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
     let lexed = lex(program);
     let parsed_program = parse(lexed);
 
-    let tape = &mut [Wrapping(0u8); 30000];
+    let tape = &mut [Wrapping(0u8); MEMORY_SIZE];
     recurse_leaves(&parsed_program, tape, 0);
 
     fn recurse_leaves(
         ast: &Vec<ASTEntry>,
-        tape: &mut [Wrapping<u8>; 30000],
+        tape: &mut [Wrapping<u8>; MEMORY_SIZE],
         mut tape_index: usize,
     ) {
         let ast_len = ast.len();
@@ -128,10 +129,10 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
                     tape[tape_index] = cell_value - Wrapping(1);
                 }
                 Tokens::ShiftRight => {
-                    tape_index = (tape_index + 1) % 29999;
+                    tape_index = (tape_index + 1) % (MEMORY_SIZE - 1);
                 }
                 Tokens::ShiftLeft => {
-                    tape_index = (29999 + tape_index) % 30000;
+                    tape_index = ((MEMORY_SIZE - 1) + tape_index) % MEMORY_SIZE;
                 }
                 // print char at current point in the tape
                 Tokens::Print => {
