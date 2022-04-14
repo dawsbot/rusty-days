@@ -1,15 +1,10 @@
 use std::env;
 use std::fs;
 use std::io;
-fn main() {
-    let args: Vec<String> = env::args().collect();
+use std::num::Wrapping;
 
-    let filename = &args[1];
-
-    let program = fs::read_to_string(filename).expect("Something went wrong reading the file");
-    // println!("The program: {}", program);
-    let mut tape = [0u8; 30000];
-
+fn run(program: String) -> [Wrapping<u8>; 30000] {
+    let mut tape = [Wrapping(0u8); 30000];
     // Where the processor is at in the program
     let mut program_counter = 0;
     // Where the current cell is in the tape
@@ -30,7 +25,7 @@ fn main() {
             Jump to closing bracket if the current cell is zero
              */
             '[' => {
-                if cell_value == 0 {
+                if cell_value == Wrapping(0) {
                     let mut inside_loop_count = 0;
                     // move to matching ]
                     loop {
@@ -50,7 +45,7 @@ fn main() {
                 }
             }
             ']' => {
-                if cell_value == 0 {
+                if cell_value == Wrapping(0) {
                     loop_start_indices.pop();
                 } else {
                     // pop back to start of loop
@@ -59,10 +54,10 @@ fn main() {
             }
 
             '+' => {
-                tape[address_pointer] = cell_value + 1;
+                tape[address_pointer] = cell_value + Wrapping(1);
             }
             '-' => {
-                tape[address_pointer] = cell_value - 1;
+                tape[address_pointer] = cell_value - Wrapping(1);
             }
             '>' => {
                 address_pointer = address_pointer + 1;
@@ -72,7 +67,7 @@ fn main() {
             }
             // print char at current point in the tape
             '.' => {
-                print!("{}", cell_value as char)
+                print!("{}", (cell_value.0 as char))
             }
             // take input from user and store it in the tape
             ',' => {
@@ -82,7 +77,7 @@ fn main() {
                     .read_line(&mut user_input)
                     .expect("Failed to read line");
                 let user_input = match user_input.trim().parse() {
-                    Ok(num) => num,
+                    Ok(num) => Wrapping(num),
                     Err(_) => continue,
                 };
                 tape[address_pointer] = user_input;
@@ -91,5 +86,35 @@ fn main() {
         }
         program_counter += 1;
     }
-    // println!("Full tape: {:?}", tape);
+    return tape;
+}
+
+fn read_file() -> String {
+    let args: Vec<String> = env::args().collect();
+    let filename = &args[1];
+
+    let program = fs::read_to_string(filename).expect("Something went wrong reading the file");
+    program
+}
+
+fn main() {
+    let program = read_file();
+    run(program);
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_plus() {
+        let res = run(String::from("+"));
+        assert_eq!(res[0], Wrapping(1));
+        assert_eq!(res[1], Wrapping(0));
+    }
+
+    #[test]
+    fn test_overflow_minus() {
+        let res = run(String::from("-"));
+        assert_eq!(res[0], Wrapping(255));
+    }
 }
