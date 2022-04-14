@@ -83,76 +83,58 @@ fn parse(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
 
 fn run(program: String) -> [Wrapping<u8>; 30000] {
     let lexed = lex(program);
-    dbg!(&lexed);
     let parsed_program = parse(lexed);
-    dbg!(&parsed_program);
 
     let tape = &mut [Wrapping(0u8); 30000];
+    recurse_leaves(parsed_program, tape, 0);
 
-    recurse_leaves(parsed_program, tape);
-    fn recurse_leaves(ast: Vec<ASTEntry>, tape: &mut [Wrapping<u8>; 30000]) {
+    fn recurse_leaves(ast: Vec<ASTEntry>, tape: &mut [Wrapping<u8>; 30000], mut tape_index: usize) {
         let ast_len = ast.len();
         // Where the processor is at in the program
-        let mut program_counter = 0;
-        // Where the current cell is in the tape
-        let mut address_pointer = 0;
+        let mut ast_index = 0;
 
-        while program_counter < ast_len {
-            // dbg!(program_counter, ast_len);
-            let cell_value = tape[address_pointer];
-
-            match ast[program_counter].token {
+        // error address_pointer needs to be nested-aware to access value from the tape properly
+        while ast_index < ast_len {
+            let cell_value = tape[tape_index];
+            println!();
+            println!("{:?}", &tape[0..4]);
+            dbg!(ast_index, tape_index, &ast[ast_index].token, cell_value);
+            match ast[ast_index].token {
                 /*
                 Recurse in if non-zero
                   */
                 Tokens::StartLoop => {
                     if cell_value != Wrapping(0) {
-                        let members = ast[program_counter].members.clone();
+                        let members = ast[ast_index].members.clone();
+                        dbg!(&members);
                         // recurse into members
-                        recurse_leaves(members, tape);
-                        // let mut inside_loop_count = 0;
-                        // // move to matching ]
-                        // loop {
-                        //     program_counter += 1;
-                        //     let current_char = program_chars[program_counter];
-                        //     if current_char == '[' {
-                        //         inside_loop_count += 1;
-                        //     } else if current_char == ']' {
-                        //         if inside_loop_count == 0 {
-                        //             break;
-                        //         }
-                        //         inside_loop_count -= 1;
-                        //     }
+                        recurse_leaves(members, tape, tape_index);
                     }
                 }
                 Tokens::EndLoop => {
                     // println!("end loop, cell_value {}", cell_value);
                     if cell_value != Wrapping(0) {
-                        recurse_leaves(ast.clone(), tape);
+                        recurse_leaves(ast.clone(), tape, tape_index);
                     }
                 }
                 Tokens::Increment => {
-                    // println!(
-                    //     "incrementing cell_value: {}, curr: {}",
-                    //     cell_value, tape[address_pointer]
-                    // );
-                    tape[address_pointer] = cell_value + Wrapping(1);
+                    tape[tape_index] = cell_value + Wrapping(1);
                 }
                 Tokens::Decrement => {
-                    tape[address_pointer] = cell_value - Wrapping(1);
+                    tape[tape_index] = cell_value - Wrapping(1);
                 }
                 Tokens::ShiftRight => {
-                    if address_pointer == 29999 {
-                        address_pointer = 0;
+                    if tape_index == 29999 {
+                        tape_index = 0;
                     } else {
-                        address_pointer = address_pointer + 1;
+                        tape_index = tape_index + 1;
                     }
                 }
                 Tokens::ShiftLeft => {
-                    if address_pointer == 0 {
-                        address_pointer = 29999;
+                    if tape_index == 0 {
+                        tape_index = 29999;
                     } else {
-                        address_pointer = address_pointer - 1;
+                        tape_index = tape_index - 1;
                     }
                 }
                 // print char at current point in the tape
@@ -170,10 +152,10 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
                         Ok(num) => Wrapping(num),
                         Err(_) => continue,
                     };
-                    tape[address_pointer] = user_input;
+                    tape[tape_index] = user_input;
                 }
             }
-            program_counter += 1;
+            ast_index += 1;
         }
     }
     return *tape;
@@ -222,5 +204,13 @@ mod test {
         let res = run(String::from(program));
         assert_eq!(res[0], Wrapping(1));
         assert_eq!(res[1], Wrapping(0));
+    }
+    #[test]
+    fn test_nested_loop() {
+        let program = "+>+[+>] should result in 120";
+        let res = run(String::from(program));
+        assert_eq!(res[0], Wrapping(1));
+        assert_eq!(res[1], Wrapping(2));
+        assert_eq!(res[2], Wrapping(0));
     }
 }
