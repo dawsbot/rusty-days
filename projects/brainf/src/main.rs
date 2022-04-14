@@ -60,10 +60,18 @@ fn run(program: String) -> [Wrapping<u8>; 30000] {
                 tape[address_pointer] = cell_value - Wrapping(1);
             }
             '>' => {
-                address_pointer = address_pointer + 1;
+                if address_pointer == 29999 {
+                    address_pointer = 0;
+                } else {
+                    address_pointer = address_pointer + 1;
+                }
             }
             '<' => {
-                address_pointer = address_pointer - 1;
+                if address_pointer == 0 {
+                    address_pointer = 29999;
+                } else {
+                    address_pointer = address_pointer - 1;
+                }
             }
             // print char at current point in the tape
             '.' => {
@@ -116,5 +124,6 @@ mod test {
     fn test_overflow_minus() {
         let res = run(String::from("-"));
         assert_eq!(res[0], Wrapping(255));
+        assert_eq!(res[1], Wrapping(0));
     }
 }
