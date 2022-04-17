@@ -192,7 +192,6 @@ struct Color(i32, i32, i32);
 let dark = Color(20,20,20);
 ```
 
-````
 
 # Etc.
 
