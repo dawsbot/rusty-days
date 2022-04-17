@@ -3,7 +3,7 @@ use std::fs;
 use std::io;
 use std::num::Wrapping;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Tokens {
     Decrement,
     Increment,
@@ -39,6 +39,7 @@ fn lex(program: String) -> Vec<Tokens> {
 #[derive(Debug, Clone)]
 struct ASTEntry {
     token: Tokens,
+    consecutive_count: usize,
     // line: usize,
     // only opening and closing brackets get this
     matching_bracket: Option<usize>,
@@ -56,35 +57,39 @@ fn assemble_tokens(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
 
     while i < lexed.len() {
         let token = &lexed[i];
-        let ast_entry = ASTEntry {
+        let mut ast_entry = ASTEntry {
             token: token.clone(),
             matching_bracket: None,
+            consecutive_count: 1,
         };
         match token {
             Tokens::StartLoop => {
-                opening_loop_indices.push(i);
                 tokens.push(ast_entry);
+                opening_loop_indices.push(tokens.len() - 1);
             }
             Tokens::EndLoop => {
                 let matching_bracket = opening_loop_indices.pop().unwrap();
-                tokens[matching_bracket].matching_bracket = Some(i);
-                let ast_entry = ASTEntry {
-                    token: token.clone(),
-                    matching_bracket: Some(matching_bracket),
-                };
+                // dbg!(matching_bracket, tokens.len());
+                tokens[matching_bracket].matching_bracket = Some(tokens.len() - 1);
+                ast_entry.matching_bracket = Some(matching_bracket);
                 tokens.push(ast_entry);
             }
             _ => {
+                let genesis_token = token;
+                while i < lexed.len() - 1 && lexed[i + 1] == *genesis_token {
+                    ast_entry.consecutive_count += 1;
+                    i += 1;
+                }
                 tokens.push(ast_entry);
             }
         }
         i += 1;
     }
+    // dbg!(&tokens);
     return tokens;
 }
 
 const MEMORY_SIZE: usize = 30_000;
-// const MEMORY_SIZE: usize = 6;
 fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
     let lexed = lex(program);
     let tokens = assemble_tokens(lexed);
@@ -98,6 +103,7 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
     // error address_pointer needs to be nested-aware to access value from the tape properly
     while tokens_index < tokens_len {
         let cell_value = tape[tape_index];
+        let consecutive_count = tokens[tokens_index].consecutive_count;
         // println!();
         // println!("{:?}", &tape[0..4]);
         // dbg!(tokens_index, &tape_index, &tokens[tokens_index], cell_value);
@@ -114,20 +120,22 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
                 }
             }
             Tokens::Increment => {
-                tape[tape_index] = cell_value + Wrapping(1);
+                tape[tape_index] = cell_value + Wrapping(consecutive_count as u8);
             }
             Tokens::Decrement => {
-                tape[tape_index] = cell_value - Wrapping(1);
+                tape[tape_index] = cell_value - Wrapping(consecutive_count as u8);
             }
             Tokens::ShiftRight => {
-                tape_index = (tape_index + 1) % (MEMORY_SIZE - 1);
+                tape_index = (tape_index + consecutive_count) % (MEMORY_SIZE - 1);
             }
             Tokens::ShiftLeft => {
-                tape_index = ((MEMORY_SIZE - 1) + tape_index) % MEMORY_SIZE;
+                tape_index = ((MEMORY_SIZE - consecutive_count) + tape_index) % MEMORY_SIZE;
             }
             // print char at current point in the tape
             Tokens::Print => {
-                print!("{}", (cell_value.0 as char))
+                for _ in 0..consecutive_count {
+                    print!("{}", (cell_value.0 as char))
+                }
             }
             // take input from user and store it in the tape
             Tokens::TakeInput => {
@@ -145,7 +153,7 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
         }
         tokens_index += 1;
     }
-    // dbg!(*tape);
+    // dbg!(&tape);
     return tape;
 }
 
