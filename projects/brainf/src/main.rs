@@ -61,21 +61,9 @@ fn assemble_tokens(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
             matching_bracket: None,
         };
         match token {
-            // newlines do not belong in the AST
-            // Tokens::NewLine => current_line += 1,
-            // Tokens::NewLine => continue,
             Tokens::StartLoop => {
                 opening_loop_indices.push(i);
                 tokens.push(ast_entry);
-                // let nested_lexed = &lexed[(i + 1)..];
-                // let members = assemble_tokens(nested_lexed.to_vec());
-                // ast_entry.members = members;
-                // // operations were inside this loop
-                // let members_len = ast_entry.members.len();
-                // if members_len > 0 {
-                //     i = i + members_len;
-                // }
-                // ast.push(ast_entry);
             }
             Tokens::EndLoop => {
                 let matching_bracket = opening_loop_indices.pop().unwrap();
@@ -101,15 +89,15 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
     let lexed = lex(program);
     let tokens = assemble_tokens(lexed);
 
-    let tape = &mut [Wrapping(0u8); MEMORY_SIZE];
-    let tape_index = &mut 0;
+    let mut tape = [Wrapping(0u8); MEMORY_SIZE];
+    let mut tape_index = 0;
 
     let mut tokens_index = 0;
     let tokens_len = tokens.len();
 
     // error address_pointer needs to be nested-aware to access value from the tape properly
     while tokens_index < tokens_len {
-        let cell_value = tape[*tape_index];
+        let cell_value = tape[tape_index];
         // println!();
         // println!("{:?}", &tape[0..4]);
         // dbg!(tokens_index, &tape_index, &tokens[tokens_index], cell_value);
@@ -126,16 +114,16 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
                 }
             }
             Tokens::Increment => {
-                tape[*tape_index] = cell_value + Wrapping(1);
+                tape[tape_index] = cell_value + Wrapping(1);
             }
             Tokens::Decrement => {
-                tape[*tape_index] = cell_value - Wrapping(1);
+                tape[tape_index] = cell_value - Wrapping(1);
             }
             Tokens::ShiftRight => {
-                *tape_index = (*tape_index + 1) % (MEMORY_SIZE - 1);
+                tape_index = (tape_index + 1) % (MEMORY_SIZE - 1);
             }
             Tokens::ShiftLeft => {
-                *tape_index = ((MEMORY_SIZE - 1) + *tape_index) % MEMORY_SIZE;
+                tape_index = ((MEMORY_SIZE - 1) + tape_index) % MEMORY_SIZE;
             }
             // print char at current point in the tape
             Tokens::Print => {
@@ -152,13 +140,13 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
                     Ok(num) => Wrapping(num),
                     Err(_) => continue,
                 };
-                tape[*tape_index] = user_input;
+                tape[tape_index] = user_input;
             }
         }
         tokens_index += 1;
     }
     // dbg!(*tape);
-    return *tape;
+    return tape;
 }
 
 fn read_file() -> String {
