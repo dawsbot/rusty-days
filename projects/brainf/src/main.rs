@@ -40,10 +40,8 @@ fn lex(program: String) -> Vec<Tokens> {
 struct ASTEntry {
     token: Tokens,
     consecutive_count: usize,
-    // line: usize,
     // only opening and closing brackets get this
     matching_bracket: Option<usize>,
-    // members: Vec<ASTEntry>,
 }
 
 // step 2
@@ -69,7 +67,6 @@ fn assemble_tokens(lexed: Vec<Tokens>) -> Vec<ASTEntry> {
             }
             Tokens::EndLoop => {
                 let matching_bracket = opening_loop_indices.pop().unwrap();
-                // dbg!(matching_bracket, tokens.len());
                 tokens[matching_bracket].matching_bracket = Some(tokens.len() - 1);
                 ast_entry.matching_bracket = Some(matching_bracket);
                 tokens.push(ast_entry);
@@ -104,9 +101,6 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
     while tokens_index < tokens_len {
         let cell_value = tape[tape_index];
         let consecutive_count = tokens[tokens_index].consecutive_count;
-        // println!();
-        // println!("{:?}", &tape[0..4]);
-        // dbg!(tokens_index, &tape_index, &tokens[tokens_index], cell_value);
         match tokens[tokens_index].token {
             Tokens::StartLoop => {
                 if cell_value == Wrapping(0) {
