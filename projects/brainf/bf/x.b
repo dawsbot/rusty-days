@@ -1,1 +1,1 @@
-<+>->+[-]
++>[+should skip this+]
