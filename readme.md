@@ -192,6 +192,70 @@ struct Color(i32, i32, i32);
 let dark = Color(20,20,20);
 ```
 
+## Errors
+
+- Many functions in rust return `Result<OK_TYPE_HERE, ERR_TYPE_HERE>` - This allows the dev to handle the `Ok` and the `Err` case
+
+### Non-Recoverable errors (`panic`)
+
+Want to "throw an error" that is **not** recoverable?
+
+```rust
+panic!("crash and burn");
+```
+
+```rust
+let v = vec![1, 2, 3];
+// index is out of range, so this will also panic
+v[99];
+```
+
+### Recoverable Errors (`Result`)
+
+- Most errors aren’t serious enough to panic. Prefer `Result` instead of `panic`
+
+- Short ways (auto-calls panic)
+
+```rust
+// does not allow for descriptive errors
+let f = File::open("hello.txt").unwrap();
+```
+
+```rust
+let f = File::open("hello.txt").expect("Failed to open hello.txt");
+```
+
+- Best way (allows the parent to handle error AND is terse)
+
+```rust
+use std::fs::File;
+use std::io;
+use std::io::Read;
+
+fn read_username_from_file() -> Result<String, io::Error> {
+    // notice the "?"
+    let mut f = File::open("hello.txt")?;
+    let mut s = String::new();
+    // notice the "?"
+    f.read_to_string(&mut s)?;
+    Ok(s)
+}
+```
+
+- Longest way (and safest way)
+
+```rust
+use std::fs::File;
+
+fn main() {
+    let f = File::open("hello.txt");
+
+    let f = match f {
+        Ok(file) => file,
+        Err(error) => panic!("Problem opening the file: {:?}", error),
+    };
+}
+```
 
 # Etc.
 
@@ -210,7 +274,7 @@ fn main() {
     // the statement `let y = 6` does not return anything
     let x = (let y = 6);
 }
-````
+```
 
 - This program is valid. Add a semi to `x+1` and not-so!
 
