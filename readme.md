@@ -27,6 +27,24 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 - [Language by principles](https://doc.rust-lang.org/stable/rust-by-example)
 - [Language by examples (harder)](https://doc.rust-lang.org/book)
 
+<details>
+  <summary>Cool Projects using Rust</summary>
+<ul>
+  <li>https://github.com/egoist/dum</li>
+  <li>https://leerob.io/blog/rust</li>
+</ul>
+</details>
+
+<details>
+  <summary>Projects I might go make one-day</summary>
+<ul>
+<li>Redo this in rust: https://github.com/danielstjules/jsinspect</li>
+<li></li>
+
+</ul>
+
+</details>
+
 <br/>
 <hr/>
 
