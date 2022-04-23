@@ -27,8 +27,9 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 - [Language by principles](https://doc.rust-lang.org/stable/rust-by-example)
 - [Language by examples (harder)](https://doc.rust-lang.org/book)
 
+<br/>
 <details>
-  <summary>Cool Projects using Rust</summary>
+  <summary>✅ Cool Projects using Rust</summary>
 <ul>
   <li>https://github.com/egoist/dum</li>
   <li>https://leerob.io/blog/rust</li>
@@ -36,10 +37,10 @@ Rust (aka RustLang) is a language for performance, reliability, and productivity
 </details>
 
 <details>
-  <summary>Projects I might go make one-day</summary>
+  <summary>🎁 Projects I might go make one-day</summary>
 <ul>
-<li>Redo this in rust: https://github.com/danielstjules/jsinspect</li>
-<li></li>
+<li>Redo this in rust: https://github.com/kucherenko/jscpd</li>
+<li>JSON get/set which has a low memory footprint through compression <a href="https://dev.to/aero/giving-your-json-a-web-api-with-rust-290">(could take inspiration from this)</a></li>
 
 </ul>
 
