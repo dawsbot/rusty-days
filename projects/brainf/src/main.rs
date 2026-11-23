@@ -1,6 +1,6 @@
 use std::env;
 use std::fs;
-use std::io;
+use std::io::{self, Read, Write};
 use std::num::Wrapping;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -120,7 +120,7 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
                 tape[tape_index] = cell_value - Wrapping(consecutive_count as u8);
             }
             Tokens::ShiftRight => {
-                tape_index = (tape_index + consecutive_count) % (MEMORY_SIZE - 1);
+                tape_index = (tape_index + consecutive_count) % MEMORY_SIZE;
             }
             Tokens::ShiftLeft => {
                 tape_index = ((MEMORY_SIZE - consecutive_count) + tape_index) % MEMORY_SIZE;
@@ -128,21 +128,19 @@ fn run(program: String) -> [Wrapping<u8>; MEMORY_SIZE] {
             // print char at current point in the tape
             Tokens::Print => {
                 for _ in 0..consecutive_count {
-                    print!("{}", (cell_value.0 as char))
+                    io::stdout().write_all(&[cell_value.0]).unwrap();
                 }
             }
             // take input from user and store it in the tape
             Tokens::TakeInput => {
-                let mut user_input = String::new();
-                println!("Please input a number");
-                io::stdin()
-                    .read_line(&mut user_input)
-                    .expect("Failed to read line");
-                let user_input = match user_input.trim().parse() {
-                    Ok(num) => Wrapping(num),
-                    Err(_) => continue,
-                };
-                tape[tape_index] = user_input;
+                io::stdout().flush().unwrap();
+                let mut byte = [0u8];
+                for _ in 0..consecutive_count {
+                    // on EOF, leave the cell unchanged
+                    if io::stdin().read(&mut byte).unwrap_or(0) == 1 {
+                        tape[tape_index] = Wrapping(byte[0]);
+                    }
+                }
             }
         }
         tokens_index += 1;
